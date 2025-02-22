@@ -25,11 +25,37 @@
 
   The code I have now is repetitive, which makes it harder to read, I might extract the repeated steps into a function.
   I could have an optional argument for how many items to grab since sometimes I'm grabbing all of them, and other times I'm not.
+
+  I keep forgetting to await haha. I'll get used to that
 */
 
 const { chromium } = require("playwright");
+const NUM_ARTICLES = 100;
 
 async function sortHackerNewsArticles() {
+
+  // Array obj tp hold article ID's
+  const ids = [];
+
+  async function getRows() {
+
+    // Array obj to hold articles
+    const articles = [];
+
+    // Locate all articles on the page and fill the array
+    articles.push(... await page.locator(".athing").elementHandles() );
+
+    // Determine how many articles to grab
+    let cap = Math.min(articles.length, (NUM_ARTICLES - ids.length))
+
+    // For each article, store it's ID
+    for (i = 0; i < cap; i++) {
+      const article = articles[i];
+      const thisID = await article.getAttribute("id");
+      ids.push(thisID);
+    }
+  }
+
   // Launch browser
   const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext();
@@ -38,63 +64,36 @@ async function sortHackerNewsArticles() {
   // Go to Hacker News
   await page.goto("https://news.ycombinator.com/newest");
 
-  const articles = [];
-  const ids = [];
-
   // Grab rows 1-30
-  articles.push(... await page.locator(".athing").elementHandles() );
-  for (i = 0; i < articles.length; i++) {
-    const article = articles[i];
-    const thisID = await article.getAttribute("id");
-    ids.push(thisID);
-  }
-  articles.length = 0;
+  await getRows();
 
   // Press "More"
   await page.locator(".morelink").click();
 
   // Grab rows 31-60
-  articles.push(... await page.locator(".athing").elementHandles() );
-  for (i = 0; i < articles.length; i++) {
-    const article = articles[i];
-    const thisID = await article.getAttribute("id");
-    ids.push(thisID);
-  }
-  articles.length = 0;
+  await getRows();
 
   // Press "More"
   await page.locator(".morelink").click();
 
   // Grab rows 61-90
-  articles.push(... await page.locator(".athing").elementHandles() );
-  for (i = 0; i < articles.length; i++) {
-    const article = articles[i];
-    const thisID = await article.getAttribute("id");
-    ids.push(thisID);
-  }
-  articles.length = 0;
+  await getRows();
 
   // Press "More"
   await page.locator(".morelink").click();
 
   // Grab rows 91-100
-  articles.push(... await page.locator(".athing").elementHandles() );
-  for (i = 0; i < 10; i++) {
-    const article = articles[i];
-    const thisID = await article.getAttribute("id");
-    ids.push(thisID);
-  }
-  articles.length = 0;
+  await getRows();
  
   console.log("We have", ids.length, "ID's");
-  console.log("We have", articles.length, "Articles");
   console.log("Here's an example ID:", ids[0]);
-
-  
+  console.log("Here's an example ID:", ids[30]);
+  console.log("Here's an example ID:", ids[60]);
+  console.log("Here's an example ID:", ids[90]);
 
   // Compare ID's, ensure they occur from greatest to smallest
-  for (let i = 0; i < articles.length; i++) {
-    const article = articles[i];
+  for (let i = 0; i < ids.length; i++) {
+    const thisID = ids[i];
   }
 
 }
