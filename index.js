@@ -16,6 +16,8 @@
 
   The page only displays 30 rows at a time. This makes sense why it is part of the application assignment haha 
   I'll have to use playwright to grab these rows and store them 30 at a time, then click more and do the next set until I get to 100.
+
+  Element handles are no longer valid if the page reloads so I have to save the id's before trying to grab the next set.
 */
 
 const { chromium } = require("playwright");
@@ -30,20 +32,27 @@ async function sortHackerNewsArticles() {
   await page.goto("https://news.ycombinator.com/newest");
 
   const articles = [];
+  const ids = [];
 
   // Grab rows 1-30
   articles.push(... await page.locator(".athing").elementHandles() );
+  for (i = 0; i < articles.length; i++) {
+    const article = articles[i];
+    const thisID = await article.getAttribute("id");
+    ids.push(thisID);
+  }
+  articles.length = 0;
+  console.log("We have", ids.length, "ID's");
+  console.log("We have", articles.length, "Articles");
+  console.log("Here's an example ID:", ids[0]);
 
   // Press "More"
   await page.locator(".morelink").click();
 
   // Grab rows 31-60
-  articles.push(... await page.locator(".athing").elementHandles() );
 
-  console.log(articles.length);
-  console.log(articles[0]);
-  console.log(articles[30]);
-  console.log(articles[0] == articles[30]);
+  // console.log(articles.length);
+  // console.log(articles[0] == articles[30]);
 
   for (let i = 0; i < articles.length; i++) {
     const article = articles[i];
