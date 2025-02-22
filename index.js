@@ -26,8 +26,6 @@
   The code I have now is repetitive, which makes it harder to read, I might extract the repeated steps into a function.
   I could have an optional argument for how many items to grab since sometimes I'm grabbing all of them, and other times I'm not.
 
-  I keep forgetting to await haha. I'll get used to that.
-
   New idea for a feature to add, when an article is improperly sorted, lets see if I can go to the page with the article 
   and highlight it or draw attention to it visually somehow.
 
@@ -38,6 +36,9 @@ const { chromium } = require("playwright");
 
 const NUM_ARTICLES = 100;
 const PAGE_URL = "https://news.ycombinator.com/newest";
+
+let cursor = 0; // Position in the page/list of articles
+let sorted = false; // flag for if the list of articles is sorted
 
 async function sortHackerNewsArticles() {
 
@@ -66,6 +67,7 @@ async function sortHackerNewsArticles() {
 
   // Function for checking that the ID's are in order from greatest to least
   async function checkOrder() {
+
     // Temp var for storing the previous ID, uninitialized so that the first time through the loop it is not compared against the current ID.
     let lastID;
 
@@ -83,6 +85,7 @@ async function sortHackerNewsArticles() {
     return true;
   }
 
+  // Function for looking up last article and highlighting its timestamp based on the results of the test
   async function lookUpAndHighlight() {
     await page.goto(PAGE_URL);
 
@@ -136,16 +139,14 @@ async function sortHackerNewsArticles() {
   // Grab rows 91-100
   await getRows();
 
-  // This cursor will hold the position of the last article checked, in the case of a failed test, we use the cursor position to look up the article that failed.
-  let cursor = 0;
-
   // Compare ID's, ensure they occur from greatest to smallest
-  let sorted = await checkOrder();
+  sorted = await checkOrder();
 
+  // Log results to console
   console.log("Found", ids.length, "articles.");
   console.log("Are they sorted correctly?", sorted ? "✅ YES" : "❌ NO");
 
-  // Back to main page
+  // Look up last article and highlight time according to results
   await lookUpAndHighlight();
 
 }
