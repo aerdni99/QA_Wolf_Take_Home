@@ -31,11 +31,13 @@
   New idea for a feature to add, when an article is improperly sorted, lets see if I can go to the page with the article 
   and highlight it or draw attention to it visually somehow.
 
-  im using the main page of Hacker News to test for false cases since that page is expected to have unsorted articles.
+  I'm using the main page of Hacker News to test for false cases since that page is expected to have unsorted articles.
 */
 
 const { chromium } = require("playwright");
+
 const NUM_ARTICLES = 100;
+const PAGE_URL = "https://news.ycombinator.com/newest";
 
 async function sortHackerNewsArticles() {
 
@@ -68,11 +70,11 @@ async function sortHackerNewsArticles() {
     let lastID;
 
     // For each ID (except the first) compare and assert that thisID is not greater than lastID, then return true. else return false.
-    for (let i = 0; i < ids.length; i++) {
-      const thisID = ids[i];
+    for (cursor; cursor < ids.length; cursor++) {
+      const thisID = ids[cursor];
       if(lastID) {
         if (thisID > lastID) {
-          console.log("Item #", i + 1, "is not sorted properly. Exiting loop...");
+          console.log("Item #", cursor + 1, "is not sorted properly. Exiting loop...");
           return false;
         }
       }
@@ -81,13 +83,37 @@ async function sortHackerNewsArticles() {
     return true;
   }
 
+  async function lookUpAndHighlight() {
+    await page.goto(PAGE_URL);
+
+    // Get the number of articles on the page
+    let articlesOnPage = (await page.locator(".athing").elementHandles()).length;
+
+    // while the cursor is not on the current page, go to the next page and subtract page length from the cursor
+    while (cursor >= articlesOnPage) {
+      await page.locator(".morelink").click();
+      cursor -= articlesOnPage;
+      articlesOnPage = (await page.locator(".athing").elementHandles()).length;
+    }
+
+    // Highlight the item at the cursor to visually indicate sorted or not
+    let timeStamps = await page.locator(".age").elementHandles();
+    await timeStamps[cursor].evaluate((el, sortedVal) => {
+      if (sortedVal) {
+        el.style.backgroundColor = "#90EE90";
+      } else {
+        el.style.backgroundColor = "#FFC0CB";
+      }
+    }, sorted);
+  }
+
   // Launch browser
   const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext();
   const page = await context.newPage();
 
   // Go to Hacker News
-  await page.goto("https://news.ycombinator.com/newest");
+  await page.goto(PAGE_URL);
 
   // Grab rows 1-30
   await getRows();
@@ -110,11 +136,17 @@ async function sortHackerNewsArticles() {
   // Grab rows 91-100
   await getRows();
 
+  // This cursor will hold the position of the last article checked, in the case of a failed test, we use the cursor position to look up the article that failed.
+  let cursor = 0;
+
   // Compare ID's, ensure they occur from greatest to smallest
   let sorted = await checkOrder();
 
   console.log("Found", ids.length, "articles.");
   console.log("Are they sorted correctly?", sorted ? "✅ YES" : "❌ NO");
+
+  // Back to main page
+  await lookUpAndHighlight();
 
 }
 
