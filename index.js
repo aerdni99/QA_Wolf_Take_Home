@@ -26,7 +26,12 @@
   The code I have now is repetitive, which makes it harder to read, I might extract the repeated steps into a function.
   I could have an optional argument for how many items to grab since sometimes I'm grabbing all of them, and other times I'm not.
 
-  I keep forgetting to await haha. I'll get used to that
+  I keep forgetting to await haha. I'll get used to that.
+
+  New idea for a feature to add, when an article is improperly sorted, lets see if I can go to the page with the article 
+  and highlight it or draw attention to it visually somehow.
+
+  im using the main page of Hacker News to test for false cases since that page is expected to have unsorted articles.
 */
 
 const { chromium } = require("playwright");
@@ -37,6 +42,7 @@ async function sortHackerNewsArticles() {
   // Array obj tp hold article ID's
   const ids = [];
 
+  // Function for getting rows of articles
   async function getRows() {
 
     // Array obj to hold articles
@@ -49,11 +55,30 @@ async function sortHackerNewsArticles() {
     let cap = Math.min(articles.length, (NUM_ARTICLES - ids.length))
 
     // For each article, store it's ID
-    for (i = 0; i < cap; i++) {
+    for (let i = 0; i < cap; i++) {
       const article = articles[i];
       const thisID = await article.getAttribute("id");
       ids.push(thisID);
     }
+  }
+
+  // Function for checking that the ID's are in order from greatest to least
+  async function checkOrder() {
+    // Temp var for storing the previous ID, uninitialized so that the first time through the loop it is not compared against the current ID.
+    let lastID;
+
+    // For each ID (except the first) compare and assert that thisID is not greater than lastID, then return true. else return false.
+    for (let i = 0; i < ids.length; i++) {
+      const thisID = ids[i];
+      if(lastID) {
+        if (thisID > lastID) {
+          console.log("Item #", i + 1, "is not sorted properly. Exiting loop...");
+          return false;
+        }
+      }
+      lastID = thisID;
+    }
+    return true;
   }
 
   // Launch browser
@@ -84,17 +109,12 @@ async function sortHackerNewsArticles() {
 
   // Grab rows 91-100
   await getRows();
- 
-  console.log("We have", ids.length, "ID's");
-  console.log("Here's an example ID:", ids[0]);
-  console.log("Here's an example ID:", ids[30]);
-  console.log("Here's an example ID:", ids[60]);
-  console.log("Here's an example ID:", ids[90]);
 
   // Compare ID's, ensure they occur from greatest to smallest
-  for (let i = 0; i < ids.length; i++) {
-    const thisID = ids[i];
-  }
+  let sorted = await checkOrder();
+
+  console.log("Found", ids.length, "articles.");
+  console.log("Are they sorted correctly?", sorted ? "✅ YES" : "❌ NO");
 
 }
 
