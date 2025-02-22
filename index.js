@@ -18,6 +18,13 @@
   I'll have to use playwright to grab these rows and store them 30 at a time, then click more and do the next set until I get to 100.
 
   Element handles are no longer valid if the page reloads so I have to save the id's before trying to grab the next set.
+
+  At this point, I have the first 100 article ID's all inside of an array and the last objective will be to compare them and be sure they are in order.
+  The approach I took is very intuitive. I'm stopping to think if there's a pitfall to the code I have here. I already addressed my concern with comparing ID's
+  instead of actual date/timestamps and know what I could do to fix it.
+
+  The code I have now is repetitive, which makes it harder to read, I might extract the repeated steps into a function.
+  I could have an optional argument for how many items to grab since sometimes I'm grabbing all of them, and other times I'm not.
 */
 
 const { chromium } = require("playwright");
@@ -42,18 +49,50 @@ async function sortHackerNewsArticles() {
     ids.push(thisID);
   }
   articles.length = 0;
-  console.log("We have", ids.length, "ID's");
-  console.log("We have", articles.length, "Articles");
-  console.log("Here's an example ID:", ids[0]);
 
   // Press "More"
   await page.locator(".morelink").click();
 
   // Grab rows 31-60
+  articles.push(... await page.locator(".athing").elementHandles() );
+  for (i = 0; i < articles.length; i++) {
+    const article = articles[i];
+    const thisID = await article.getAttribute("id");
+    ids.push(thisID);
+  }
+  articles.length = 0;
 
-  // console.log(articles.length);
-  // console.log(articles[0] == articles[30]);
+  // Press "More"
+  await page.locator(".morelink").click();
 
+  // Grab rows 61-90
+  articles.push(... await page.locator(".athing").elementHandles() );
+  for (i = 0; i < articles.length; i++) {
+    const article = articles[i];
+    const thisID = await article.getAttribute("id");
+    ids.push(thisID);
+  }
+  articles.length = 0;
+
+  // Press "More"
+  await page.locator(".morelink").click();
+
+  // Grab rows 91-100
+  articles.push(... await page.locator(".athing").elementHandles() );
+  for (i = 0; i < 10; i++) {
+    const article = articles[i];
+    const thisID = await article.getAttribute("id");
+    ids.push(thisID);
+  }
+  articles.length = 0;
+ 
+  console.log("We have", ids.length, "ID's");
+  console.log("We have", articles.length, "Articles");
+  console.log("Here's an example ID:", ids[0]);
+
+  
+
+  // Compare ID's, ensure they occur from greatest to smallest
   for (let i = 0; i < articles.length; i++) {
     const article = articles[i];
   }
